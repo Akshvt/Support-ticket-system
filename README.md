@@ -38,10 +38,15 @@ A full-stack support ticket management system built with Django and React. Desig
 ```bash
 git clone https://github.com/Akshvt/Support-ticket-system.git
 cd support-ticket-system
-cp .env.example .env
-# Edit .env and add your OpenAI API key (optional)
 docker-compose up --build
 ```
+
+> **Optional:** To enable AI classification, create a `.env` file in the project root before running Docker:
+> ```
+> LLM_API_KEY=your-openai-api-key-here
+> LLM_MODEL=gpt-3.5-turbo
+> ```
+> The app works fully without it — users just select category and priority manually.
 
 The app will be available at:
 - **Frontend:** http://localhost:3000
