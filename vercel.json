@@ -1,15 +1,16 @@
 {
     "version": 2,
-    "buildCommand": "bash build_vercel.sh",
-    "outputDirectory": "frontend/dist",
     "builds": [
         {
             "src": "api/index.py",
             "use": "@vercel/python"
         },
         {
-            "src": "frontend/dist/**",
-            "use": "@vercel/static"
+            "src": "frontend/package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "dist"
+            }
         }
     ],
     "routes": [
@@ -18,8 +19,11 @@
             "dest": "api/index.py"
         },
         {
+            "handle": "filesystem"
+        },
+        {
             "src": "/(.*)",
-            "dest": "frontend/dist/$1"
+            "dest": "/frontend/index.html"
         }
     ]
 }
