@@ -1,137 +1,92 @@
-# Support Ticket System
+# TicketFlow — Support Ticket System
 
-A full-stack support ticket management system with AI-powered auto-classification.
+A full-stack support ticket management system built with Django and React. Designed for teams to submit, track, and manage customer support tickets efficiently. Features intelligent auto-classification that suggests ticket categories and priorities based on the description.
+
+## Live Demo
+
+[support-ticket-system-nu.vercel.app](https://support-ticket-system-nu.vercel.app)
+
+## Features
+
+- **Ticket Submission** — Clean form to create tickets with title, description, category, and priority
+- **Smart Classification** — Integrates with OpenAI to auto-suggest category and priority from the ticket description
+- **Ticket Management** — Filter, search, and update ticket statuses in real time
+- **Analytics Dashboard** — Visual breakdown of tickets by priority and category using interactive charts
+- **Dark / Light Mode** — Full theme support with smooth transitions
+- **Responsive Design** — Works across desktop, tablet, and mobile
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | Django 4.2 + Django REST Framework |
-| **Database** | PostgreSQL 15 |
-| **Frontend** | React 18 (Vite) + Framer Motion + Recharts |
-| **LLM** | OpenAI API (GPT-3.5-turbo) |
-| **Infrastructure** | Docker + Docker Compose |
+| **Frontend** | React 18, Vite, Framer Motion, Recharts |
+| **Backend** | Django 4.2, Django REST Framework |
+| **Database** | PostgreSQL |
+| **Deployment** | Vercel (serverless) |
+| **Styling** | Custom CSS design system (glassmorphism, micro-animations) |
 
-## Quick Start
-
-### 1. Clone and configure
-
-```bash
-git clone <your-repo>
-cd support-ticket-system
-cp .env.example .env
-```
-
-### 2. Add your API key
-
-Edit `.env` and add your OpenAI API key:
-
-```
-LLM_API_KEY=sk-your-openai-api-key-here
-LLM_MODEL=gpt-3.5-turbo
-```
-
-> **Note:** The app works without an API key — ticket submission still functions, but auto-classification will be skipped. You can always select category and priority manually.
-
-### 3. Run with Docker
-
-```bash
-docker-compose up --build
-```
-
-The app will be available at:
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:8000/api/
-
-## Architecture
+## Project Structure
 
 ```
 support-ticket-system/
-├── backend/                    # Django + DRF
-│   ├── config/                 # Django settings, URLs, WSGI
-│   ├── tickets/                # Main app
-│   │   ├── models.py           # Ticket model with DB constraints
-│   │   ├── views.py            # REST API views
-│   │   ├── serializers.py      # DRF serializers
-│   │   ├── llm_service.py      # LLM classification logic
-│   │   └── urls.py             # URL routing
+├── api/                        # Vercel serverless entry point
+│   └── index.py
+├── backend/                    # Django backend
+│   ├── config/                 # Settings, URLs, WSGI
+│   ├── tickets/                # Core app (models, views, serializers)
+│   │   ├── models.py           # Ticket model with category/priority/status
+│   │   ├── views.py            # REST API endpoints
+│   │   ├── serializers.py      # Request/response serialization
+│   │   ├── llm_service.py      # OpenAI classification integration
+│   │   └── urls.py             # API routing
 │   ├── Dockerfile
-│   ├── entrypoint.sh           # Migrations + gunicorn startup
 │   └── requirements.txt
-├── frontend/                   # React (Vite)
+├── frontend/                   # React (Vite) frontend
 │   ├── src/
-│   │   ├── components/         # React components
+│   │   ├── components/         # UI components
 │   │   │   ├── Navbar.jsx
 │   │   │   ├── Hero.jsx
 │   │   │   ├── TicketForm.jsx
 │   │   │   ├── TicketList.jsx
 │   │   │   ├── StatsDashboard.jsx
 │   │   │   └── Toast.jsx
-│   │   ├── api/tickets.js      # API client
-│   │   ├── App.jsx
-│   │   └── index.css           # Design system
+│   │   ├── api/tickets.js      # API client (axios)
+│   │   ├── App.jsx             # Root component with tab navigation
+│   │   └── index.css           # Full design system
 │   ├── Dockerfile
-│   ├── nginx.conf              # Nginx reverse proxy
 │   └── package.json
-├── docker-compose.yml
-├── .env.example
-└── README.md
+├── docker-compose.yml          # Local development with Docker
+├── vercel.json                 # Vercel deployment config
+└── build_vercel.sh             # Build + migration script
 ```
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/tickets/` | Create a new ticket (returns 201) |
-| GET | `/api/tickets/` | List all tickets (supports `?category=`, `?priority=`, `?status=`, `?search=`) |
-| PATCH | `/api/tickets/<id>/` | Update a ticket (e.g., change status) |
-| GET | `/api/tickets/stats/` | Aggregated statistics (DB-level) |
-| POST | `/api/tickets/classify/` | LLM-powered classification |
+| `POST` | `/api/tickets/` | Create a new ticket |
+| `GET` | `/api/tickets/` | List tickets (supports `?category=`, `?priority=`, `?status=`, `?search=`) |
+| `PATCH` | `/api/tickets/<id>/` | Update a ticket (change status, category, etc.) |
+| `GET` | `/api/tickets/stats/` | Aggregated statistics (DB-level) |
+| `POST` | `/api/tickets/classify/` | Get category/priority suggestions from description |
 
-## LLM Integration
+## Getting Started
 
-### Why OpenAI (GPT-3.5-turbo)?
+### Run Locally with Docker
 
-- **Reliability**: Most widely used and tested API
-- **Speed**: GPT-3.5-turbo is fast for classification tasks
-- **Cost**: Very low cost per request (~$0.001 per classification)
-- **JSON mode**: Reliable structured output
+```bash
+git clone https://github.com/Akshvt/Support-ticket-system.git
+cd support-ticket-system
+cp .env.example .env
+docker-compose up --build
+```
 
-### How it works
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:8000/api/`
 
-1. User types a ticket description
-2. On blur (or manual trigger), the frontend calls `/api/tickets/classify/`
-3. The backend sends the description to OpenAI with a classification prompt
-4. The response is validated (must be valid category + priority)
-5. Category and priority dropdowns are pre-filled with suggestions
-6. User can accept or override before submitting
+### Run Without Docker
 
-### Error Handling
-
-- **No API key configured**: Classification skipped silently, user selects manually
-- **API unreachable**: Returns null suggestions with a user-friendly message
-- **Invalid response**: Logged and treated as unavailable
-- **Rate limits**: Handled gracefully, ticket submission still works
-
-### Prompt Design
-
-The classification prompt is in `backend/tickets/llm_service.py`. It:
-- Defines clear categories with examples
-- Defines priority levels with criteria
-- Requests JSON-only output
-- Uses low temperature (0.1) for consistent results
-
-## Design Decisions
-
-1. **Database-level aggregation**: Stats endpoint uses Django ORM `annotate()` and `values()` for all calculations — no Python loops
-2. **Graceful LLM degradation**: The entire form works without LLM. Classification is a progressive enhancement
-3. **Debounced search**: 400ms debounce on search input prevents excessive API calls
-4. **Optimistic UI**: Status changes update locally immediately, then sync with backend
-5. **Tab-based navigation**: Single-page app with smooth animated transitions between views
-
-## Development
-
-### Backend only
+**Backend:**
 ```bash
 cd backend
 pip install -r requirements.txt
@@ -139,9 +94,50 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-### Frontend only
+**Frontend:**
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+
+## Classification System
+
+The app integrates with OpenAI's API to classify incoming tickets:
+
+1. User writes a ticket description
+2. On blur, the frontend calls `/api/tickets/classify/`
+3. The backend sends the description to OpenAI with a structured prompt
+4. Category and priority dropdowns are pre-filled with the suggestions
+5. User can accept or override before submitting
+
+The classification prompt defines clear categories (billing, technical, account, general) and priority levels (low, medium, high, critical) with specific criteria for each. It uses low temperature (0.1) for consistent results.
+
+> Works without an API key — classification is skipped silently and users select manually.
+
+## Design Decisions
+
+- **Database-level aggregation** — Stats endpoint uses Django ORM `annotate()` and `values()` for all calculations, no Python-level loops
+- **Graceful degradation** — The entire app works without the OpenAI API. Classification is a progressive enhancement
+- **Debounced search** — 400ms debounce on the search input prevents excessive API calls
+- **Optimistic UI** — Status changes reflect immediately in the UI before the API response
+- **Tab-based navigation** — Single-page app with animated transitions between views using Framer Motion
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `DJANGO_SECRET_KEY` | Yes | Django secret key |
+| `DEBUG` | No | Set to `False` in production |
+| `ALLOWED_HOSTS` | No | Comma-separated list of allowed hosts |
+| `LLM_API_KEY` | No | OpenAI API key for classification |
+| `LLM_MODEL` | No | Model name (defaults to `gpt-3.5-turbo`) |
+
+## Author
+
+**Akshat**
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
