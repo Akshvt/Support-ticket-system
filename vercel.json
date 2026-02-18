@@ -1,6 +1,6 @@
 {
     "version": 2,
-    "buildCommand": "cd frontend && npm install && npm run build",
+    "buildCommand": "bash build_vercel.sh",
     "outputDirectory": "frontend/dist",
     "builds": [
         {
