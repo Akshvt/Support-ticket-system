@@ -85,7 +85,7 @@ function TicketForm({ onTicketCreated }) {
 
             onTicketCreated();
         } catch (err) {
-            setError(err.response?.data?.detail || 'Failed to create ticket. Please try again.');
+            setError(err.response?.data?.error || 'Failed to create ticket. Please try again.');
         } finally {
             setIsSubmitting(false);
         }

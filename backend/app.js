@@ -2,6 +2,8 @@
  * Express application setup.
  * Configures middleware chain and routes. Exports the app (no listen).
  */
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
 const express = require('express');
 const cors = require('cors');
 const ticketRoutes = require('./routes/ticketRoutes');
@@ -33,7 +35,6 @@ initDB().catch((err) => {
 
 // For local development: start server if run directly
 if (require.main === module) {
-    require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
     const PORT = process.env.PORT || 8000;
     app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
