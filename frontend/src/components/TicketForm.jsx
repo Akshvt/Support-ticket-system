@@ -124,7 +124,7 @@ function TicketForm({ onTicketCreated }) {
                 </motion.div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
                 <div className="form-group">
                     <label className="form-label" htmlFor="ticket-title">Title</label>
                     <input
