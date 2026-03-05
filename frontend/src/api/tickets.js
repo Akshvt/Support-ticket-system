@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_BASE = '/api';
+// Allow overriding the API base URL via env (for Vercel / production deployments)
+// Example: VITE_API_BASE_URL="https://your-backend-domain.com/api"
+const API_BASE =
+    (import.meta && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
+    process.env.VITE_API_BASE_URL ||
+    '/api';
 
 const api = axios.create({
     baseURL: API_BASE,

@@ -13,6 +13,7 @@ function TicketForm({ onTicketCreated }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isClassifying, setIsClassifying] = useState(false);
     const [classifySuggested, setClassifySuggested] = useState(false);
+    const [classifyError, setClassifyError] = useState('');
     const [error, setError] = useState('');
 
     const handleClassify = useCallback(async () => {
@@ -20,6 +21,7 @@ function TicketForm({ onTicketCreated }) {
 
         setIsClassifying(true);
         setClassifySuggested(false);
+        setClassifyError('');
         try {
             const result = await classifyTicket(description);
             if (result.suggested_category) {
@@ -31,9 +33,12 @@ function TicketForm({ onTicketCreated }) {
             if (result.suggested_category || result.suggested_priority) {
                 setClassifySuggested(true);
             }
+            if (result.error && !result.suggested_category && !result.suggested_priority) {
+                setClassifyError(result.error);
+            }
         } catch (err) {
             console.error('Classification failed:', err);
-            // Fail silently — user can still select manually
+            setClassifyError('AI classification failed. Please select manually.');
         } finally {
             setIsClassifying(false);
         }
@@ -216,6 +221,12 @@ function TicketForm({ onTicketCreated }) {
                         </select>
                     </div>
                 </div>
+
+                {classifyError && (
+                    <div className="form-hint" style={{ color: 'var(--priority-critical)', marginTop: '8px' }}>
+                        {classifyError}
+                    </div>
+                )}
 
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '8px' }}>
                     <button
