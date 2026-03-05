@@ -1,10 +1,11 @@
 /**
  * Express application setup.
- * Configures middleware chain and routes. Exports the app (no listen).
+ * Configures middleware chain, routes, and serves built frontend.
  */
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const ticketRoutes = require('./routes/ticketRoutes');
 const errorHandler = require('./middlewares/errorHandler');
@@ -16,7 +17,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --------------- Routes ---------------
+// --------------- API Routes ---------------
 app.use('/api', ticketRoutes);
 
 // Health check
@@ -24,8 +25,17 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// --------------- Error Handler ---------------
-app.use(errorHandler);
+// --------------- Error Handler (API only) ---------------
+app.use('/api', errorHandler);
+
+// --------------- Serve Built Frontend ---------------
+const distPath = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(distPath));
+
+// SPA fallback — any non-API route serves index.html
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+});
 
 // --------------- DB Init ---------------
 // Initialize DB (create table) on first import — non-blocking

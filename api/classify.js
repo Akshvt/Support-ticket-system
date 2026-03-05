@@ -1,8 +1,8 @@
 /**
  * Standalone Vercel serverless function for AI ticket classification.
- * No Express, no DB — just OpenAI. Fast cold start.
+ * Uses Google Gemini (free tier). No Express, no DB — fast cold start.
  */
-const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const CLASSIFICATION_PROMPT = `You are a support ticket classifier. Given a support ticket description, you must classify it into exactly one category and one priority level.
 
@@ -46,7 +46,7 @@ module.exports = async function handler(req, res) {
     }
 
     const apiKey = process.env.LLM_API_KEY || '';
-    const model = process.env.LLM_MODEL || 'gpt-3.5-turbo';
+    const modelName = process.env.LLM_MODEL || 'gemini-2.0-flash';
 
     if (!apiKey) {
         return res.json({
@@ -57,22 +57,20 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const client = new OpenAI({ apiKey });
-        const response = await client.chat.completions.create({
-            model,
-            messages: [
-                { role: 'system', content: CLASSIFICATION_PROMPT },
-                { role: 'user', content: `Ticket description:\n${description}` },
-            ],
-            temperature: 0.1,
-            max_tokens: 100,
-        });
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: modelName });
 
-        const content = response.choices[0].message.content.trim();
-        const result = JSON.parse(content);
+        const result = await model.generateContent([
+            { text: CLASSIFICATION_PROMPT },
+            { text: `Ticket description:\n${description}` },
+        ]);
 
-        const category = (result.suggested_category || '').toLowerCase();
-        const priority = (result.suggested_priority || '').toLowerCase();
+        const responseText = result.response.text().trim();
+        const jsonStr = responseText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        const parsed = JSON.parse(jsonStr);
+
+        const category = (parsed.suggested_category || '').toLowerCase();
+        const priority = (parsed.suggested_priority || '').toLowerCase();
 
         if (!VALID_CATEGORIES.includes(category) || !VALID_PRIORITIES.includes(priority)) {
             return res.json({

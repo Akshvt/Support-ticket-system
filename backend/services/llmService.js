@@ -1,8 +1,8 @@
 /**
  * LLM integration service for auto-classifying support tickets.
- * Uses OpenAI-compatible API to suggest category and priority.
+ * Uses Google Gemini (free tier) to suggest category and priority.
  */
-const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const CLASSIFICATION_PROMPT = `You are a support ticket classifier. Given a support ticket description, you must classify it into exactly one category and one priority level.
 
@@ -27,7 +27,7 @@ const VALID_CATEGORIES = ['billing', 'technical', 'account', 'general'];
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'critical'];
 
 /**
- * Classify a ticket description using OpenAI.
+ * Classify a ticket description using Google Gemini.
  * Returns { suggested_category, suggested_priority } or null on failure.
  */
 async function classifyTicket(description) {
@@ -38,27 +38,26 @@ async function classifyTicket(description) {
     }
 
     try {
-        const client = new OpenAI({ apiKey });
-        const model = process.env.LLM_MODEL || 'gpt-3.5-turbo';
-
-        const response = await client.chat.completions.create({
-            model,
-            messages: [
-                { role: 'system', content: CLASSIFICATION_PROMPT },
-                { role: 'user', content: `Ticket description:\n${description}` },
-            ],
-            temperature: 0.1,
-            max_tokens: 100,
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: process.env.LLM_MODEL || 'gemini-2.0-flash',
         });
 
-        const content = response.choices[0].message.content.trim();
-        const result = JSON.parse(content);
+        const result = await model.generateContent([
+            { text: CLASSIFICATION_PROMPT },
+            { text: `Ticket description:\n${description}` },
+        ]);
 
-        const category = (result.suggested_category || '').toLowerCase();
-        const priority = (result.suggested_priority || '').toLowerCase();
+        const responseText = result.response.text().trim();
+        // Strip markdown code fences if present
+        const jsonStr = responseText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        const parsed = JSON.parse(jsonStr);
+
+        const category = (parsed.suggested_category || '').toLowerCase();
+        const priority = (parsed.suggested_priority || '').toLowerCase();
 
         if (!VALID_CATEGORIES.includes(category) || !VALID_PRIORITIES.includes(priority)) {
-            console.warn('LLM returned invalid classification:', result);
+            console.warn('LLM returned invalid classification:', parsed);
             return null;
         }
 
