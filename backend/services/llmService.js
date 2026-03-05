@@ -40,7 +40,7 @@ async function classifyTicket(description) {
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: process.env.LLM_MODEL || 'gemini-2.0-flash',
+            model: process.env.LLM_MODEL || 'gemini-1.5-flash',
         });
 
         const result = await model.generateContent([
